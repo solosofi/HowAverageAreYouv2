@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>How Average Are You?</title>
+<meta name="description" content="You’re Not Normal — Find Out How Much. Are You Exceptionally Average?" />
+<style>
+  :root{
+    --bg:#0a0613;
+    --panel:#120a24;
+    --panel2:#1a0f32;
+    --text:#f5f7ff;
+    --muted:#a1a4c8;
+    --neon1:#ff2bbf;   /* magenta */
+    --neon2:#19e3ff;   /* cyan */
+    --good:#00f5a0;    /* neon green */
+    --bad:#ff5555;     /* bright red */
+    --avg:#ffd166;     /* warm gold */
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,Apple Color Emoji,Segoe UI Emoji;
+    color:var(--text);
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(25,227,255,.18), transparent 60%),
+      radial-gradient(1000px 500px at 20% 110%, rgba(255,43,191,.15), transparent 60%),
+      radial-gradient(400px 400px at 50% 20%, rgba(255,209,102,.08), transparent 60%),
+      linear-gradient(180deg, #05020a, #0a0613 40%, #0a0719);
+    min-height:100vh;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:18px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:6px 0 16px}
+  h1{margin:0;font-size:clamp(26px,5vw,44px);letter-spacing:.3px}
+  .glow{
+    background:linear-gradient(90deg,var(--neon1),var(--neon2));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 12px rgba(255,43,191,.25),0 0 14px rgba(25,227,255,.25);
+  }
+  .tag{color:var(--muted);font-size:.98rem}
+  .card{
+    position:relative;
+    background:linear-gradient(180deg, rgba(26,15,50,.9), rgba(12,7,22,.85));
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:18px;padding:16px;overflow:hidden;
+  }
+  .card::before{
+    content:"";position:absolute;inset:-2px;
+    background:conic-gradient(from 0deg, rgba(255,43,191,.3), rgba(25,227,255,.3), transparent 30%);
+    filter:blur(18px);opacity:.35;z-index:0;pointer-events:none;mask:linear-gradient(#000,#000) content-box,linear-gradient(#000,#000);
+    -webkit-mask-composite: xor; mask-composite: exclude; padding:2px;border-radius:18px;
+  }
+  .card > *{position:relative;z-index:1}
+
+  .grid{display:grid;grid-template-columns:1fr;gap:14px}
+  @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+
+  label{display:flex;justify-content:space-between;gap:10px;font-weight:700}
+  .sub{color:var(--muted);font-weight:600}
+  input[type=range]{width:100%}
+  select, input[type=number]{
+    width:100%;padding:12px 12px;border-radius:12px;border:1px solid #2b2250;
+    background:#0e0a1d;color:var(--text);outline:none;
+    box-shadow:inset 0 0 0 999px rgba(255,255,255,0);transition:box-shadow .2s,border-color .2s;
+  }
+  select:focus, input[type=number]:focus{border-color:#6f4aff; box-shadow:0 0 0 3px rgba(111,74,255,.25)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .pill{
+    display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#0e0a1d;border:1px solid #2b2250;font-size:.95rem;color:var(--text);
+    box-shadow:0 0 0 0 rgba(255,43,191,0); transition:transform .12s, box-shadow .2s, border-color .2s;
+  }
+  .pill.good{border-color:rgba(0,245,160,.55); box-shadow:0 0 18px rgba(0,245,160,.15) inset}
+  .pill.bad{border-color:rgba(255,85,85,.55)}
+  .btn{
+    appearance:none;border:none;border-radius:14px;padding:14px 18px;font-weight:900;cursor:pointer;color:#0b0415;
+    background:linear-gradient(90deg,var(--avg),#ff7ad9,var(--neon2));
+    box-shadow:0 10px 28px rgba(255,122,217,.25), 0 4px 16px rgba(25,227,255,.18);
+    transition:transform .08s ease;
+  }
+  .btn:hover{transform:translateY(-1px) rotate(-.25deg)}
+  .btn:active{transform:translateY(1px) scale(.99)}
+  .btn.alt{background:linear-gradient(90deg,#2a1a4b,#1a1036);color:var(--text);box-shadow:inset 0 0 0 1px #3a2a6f}
+  .muted{color:var(--muted)}
+  .small{font-size:.9rem}
+  .hidden{display:none !important}
+  .score{font-size:40px;font-weight:1000;letter-spacing:.5px}
+  .meter{height:14px;border-radius:999px;background:#0d0a1b;border:1px solid #2b2250;overflow:hidden;position:relative}
+  .bar{height:100%;background:linear-gradient(90deg,#00f5a0,#ffd166,#ff2bbf,#19e3ff);width:0%;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+  .reel{
+    animation: reel .7s ease-in-out 1;
+    background: linear-gradient( to right, rgba(255,43,191,.12) 0%, transparent 30%, transparent 70%, rgba(25,227,255,.12) 100%);
+  }
+  @keyframes reel{ 0%{transform:translateY(-4px)} 50%{transform:translateY(2px)} 100%{transform:translateY(0)} }
+  .loading{width:26px;height:26px;border-radius:50%;border:3px solid rgba(255,255,255,.22);border-top-color:var(--neon2);animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* Subtle casino sparkles */
+  .sparkle{
+    position:absolute;inset:-20px;pointer-events:none;opacity:.16;filter:blur(1px);
+    background: radial-gradient(2px 2px at 20% 30%, #fff, transparent 60%),
+                radial-gradient(1.5px 1.5px at 70% 20%, #fff, transparent 60%),
+                radial-gradient(2px 2px at 60% 70%, #fff, transparent 60%),
+                radial-gradient(1.5px 1.5px at 30% 60%, #fff, transparent 60%);
+    animation:spark 6s linear infinite;
+  }
+  @keyframes spark{ 0%{transform:translateY(0)} 50%{transform:translateY(-6px)} 100%{transform:translateY(0)} }
+
+  .ad{background:#0e0a1d;border:1px dashed #3a2a6f; border-radius:12px;padding:10px;font-size:.95rem}
+  canvas.confetti{position:fixed;inset:0;pointer-events:none}
+</style>
+</head>
+<body>
+<canvas class="confetti" id="confetti"></canvas>
+<div class="wrap">
+  <header>
+    <div>
+      <h1 class="glow">How Average Are You?</h1>
+      <div class="tag">You’re Not Normal — Find Out How Much.</div>
+    </div>
+   
+  </header>
+
+  <section class="card">
+    <div class="sparkle"></div>
+    <div class="grid">
+      <div>
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <div class="sub">Age</div>
+            <div class="small muted">10–90</div>
+          </div>
+          <strong id="ageOut">25</strong>
+        </div>
+        <input id="age" type="range" min="10" max="90" value="25">
+      </div>
+
+      <div>
+        <label for="income">Income bracket <span class="sub" id="incomeHint">Select</span></label>
+        <select id="income">
+          <option value="" selected disabled>Select your bracket</option>
+          <option value="lt20k">Under $20k</option>
+          <option value="20-40k">$20k–$40k</option>
+          <option value="40-75k">$40k–$75k</option>
+          <option value="75-125k">$75k–$125k</option>
+          <option value="125-200k">$125k–$200k</option>
+          <option value="gt200k">Over $200k</option>
+        </select>
+      </div>
+
+      <div>
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <div class="sub">Sleep hours</div>
+            <div class="small muted">2–12 hours</div>
+          </div>
+          <strong id="sleepOut">7</strong>
+        </div>
+        <input id="sleep" type="range" min="2" max="12" value="7" step="0.5">
+      </div>
+
+      <div>
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <div class="sub">Screen time (hrs/day)</div>
+            <div class="small muted">0–16 hours</div>
+          </div>
+          <strong id="screenOut">5</strong>
+        </div>
+        <input id="screen" type="range" min="0" max="16" value="5" step="0.5">
+      </div>
+
+      <div>
+        <label>Fitness frequency</label>
+        <div class="row" role="radiogroup" aria-label="Fitness frequency">
+          <button class="pill" data-fit="never">Never</button>
+          <button class="pill" data-fit="1-2">1–2x/week</button>
+          <button class="pill" data-fit="3-4">3–4x/week</button>
+          <button class="pill" data-fit="daily">Daily</button>
+        </div>
+      </div>
+
+      <div>
+        <label for="country">Country (for averages) <span class="sub">(optional)</span></label>
+        <select id="country">
+          <option value="global">Global</option>
+          <option value="us">United States</option>
+          <option value="uk">United Kingdom</option>
+          <option value="in">India</option>
+          <option value="de">Germany</option>
+          <option value="br">Brazil</option>
+          <option value="jp">Japan</option>
+          <option value="au">Australia</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:14px;align-items:center;justify-content:space-between">
+      <div class="small muted">Stateless. No data saved. Hit “Calculate” to spin the reels.</div>
+      <button id="calc" class="btn">Calculate My Average Score 🎰</button>
+    </div>
+  </section>
+
+  <section id="results" class="card hidden" style="margin-top:16px">
+    <div class="sparkle"></div>
+    <div class="row" style="align-items:center;justify-content:space-between">
+      <div>
+        <div class="muted small">Your Average Score</div>
+        <div class="score" id="avgScore">—</div>
+      </div>
+      <div class="pill" id="rarityPill">Spinning…</div>
+    </div>
+
+    <div class="meter reel" style="margin:12px 0 6px">
+      <div class="bar" id="progressBar"></div>
+    </div>
+    <div class="small muted" id="basicWeirdLabel">0% basic → 100% weird</div>
+
+    <div class="row" style="margin-top:12px;flex-wrap:wrap" id="cats"></div>
+
+    <div id="commentary" class="card" style="margin-top:12px;background:#0d0a1b"></div>
+
+    <div class="grid" style="margin-top:12px">
+      <div class="ad">
+        Contextual tip: <span id="adCopy">Loading…</span>
+        <div class="row" style="margin-top:8px">
+          <a id="ctaFix" class="btn" href="#" target="_blank" rel="noopener">Fix your worst stat</a>
+          <button id="retry" class="btn alt">One more spin…</button>
+        </div>
+      </div>
+      <div class="ad">
+        Share the chaos:
+        <div class="row" style="margin-top:8px">
+          <a id="shareX" class="pill" href="#" target="_blank" rel="noopener">Share on X</a>
+          <a id="shareFb" class="pill" href="#" target="_blank" rel="noopener">Facebook</a>
+          <a id="shareWa" class="pill" href="#" target="_blank" rel="noopener">WhatsApp</a>
+          <button id="copyLink" class="pill">Copy link</button>
+        </div>
+        <div class="row" style="margin-top:8px;align-items:center">
+          <canvas id="qr" width="96" height="96" style="background:#0e0a1d;border-radius:8px"></canvas>
+          <div class="small muted">Scan to test your friends!</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="mystery" class="card hidden" style="margin-top:12px;background:#0b0819">
+      <strong>Weirdness Index (Unlocked)</strong>
+      <div id="weirdText" class="small muted" style="margin-top:6px">Surprise stats loading…</div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ---- State ---- */
+let fitness = null;
+let attempts = 0;
+let visits = Number(sessionStorage.getItem('visits')||'0')+1;
+sessionStorage.setItem('visits', String(visits));
+let idleTimer, lastResult = null;
+
+/* ---- Elements ---- */
+const age = document.getElementById('age');
+const ageOut = document.getElementById('ageOut');
+const income = document.getElementById('income');
+const incomeHint = document.getElementById('incomeHint');
+const sleep = document.getElementById('sleep');
+const sleepOut = document.getElementById('sleepOut');
+const screen = document.getElementById('screen');
+const screenOut = document.getElementById('screenOut');
+const country = document.getElementById('country');
+const calc = document.getElementById('calc');
+const results = document.getElementById('results');
+const avgScore = document.getElementById('avgScore');
+const rarityPill = document.getElementById('rarityPill');
+const progressBar = document.getElementById('progressBar');
+const basicWeirdLabel = document.getElementById('basicWeirdLabel');
+const cats = document.getElementById('cats');
+const commentary = document.getElementById('commentary');
+const adCopy = document.getElementById('adCopy');
+const ctaFix = document.getElementById('ctaFix');
+const retry = document.getElementById('retry');
+const shareX = document.getElementById('shareX');
+const shareFb = document.getElementById('shareFb');
+const shareWa = document.getElementById('shareWa');
+const copyLink = document.getElementById('copyLink');
+const qrCanvas = document.getElementById('qr');
+const confettiCanvas = document.getElementById('confetti');
+
+/* ---- UI bindings ---- */
+age.addEventListener('input', ()=>ageOut.textContent = age.value);
+sleep.addEventListener('input', ()=>sleepOut.textContent = sleep.value);
+screen.addEventListener('input', ()=>screenOut.textContent = screen.value);
+income.addEventListener('change', ()=>{
+  const map={lt20k:'Under $20k', '20-40k':'$20k–$40k','40-75k':'$40k–$75k','75-125k':'$75k–$125k','125-200k':'$125k–$200k',gt200k:'Over $200k'};
+  incomeHint.textContent = map[income.value]||'Select';
+});
+document.querySelectorAll('[data-fit]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('[data-fit]').forEach(b=>b.classList.remove('good','bad'));
+    btn.classList.add('good');
+    fitness = btn.getAttribute('data-fit');
+  })
+});
+
+/* ---- Averages (heuristics) ---- */
+const avgs = {
+  global:{sleep:7.0, screen:6.0, incomeMid:'40-75k', fitDist:{'never':0.3,'1-2':0.35,'3-4':0.22,'daily':0.13}},
+  us:{sleep:7.1, screen:7.0, incomeMid:'75-125k', fitDist:{'never':0.25,'1-2':0.36,'3-4':0.24,'daily':0.15}},
+  uk:{sleep:7.0, screen:6.5, incomeMid:'40-75k', fitDist:{'never':0.28,'1-2':0.36,'3-4':0.24,'daily':0.12}},
+  in:{sleep:6.8, screen:5.0, incomeMid:'20-40k', fitDist:{'never':0.38,'1-2':0.34,'3-4':0.18,'daily':0.10}},
+  de:{sleep:7.1, screen:5.5, incomeMid:'40-75k', fitDist:{'never':0.27,'1-2':0.37,'3-4':0.24,'daily':0.12}},
+  br:{sleep:7.0, screen:6.0, incomeMid:'20-40k', fitDist:{'never':0.32,'1-2':0.36,'3-4':0.22,'daily':0.10}},
+  jp:{sleep:6.5, screen:5.0, incomeMid:'40-75k', fitDist:{'never':0.33,'1-2':0.37,'3-4':0.22,'daily':0.08}},
+  au:{sleep:7.1, screen:6.0, incomeMid:'75-125k', fitDist:{'never':0.24,'1-2':0.36,'3-4':0.26,'daily':0.14}},
+}
+function incomeDistance(user, mid){
+  const order = ['lt20k','20-40k','40-75k','75-125k','125-200k','gt200k'];
+  if(!user || !mid) return 1;
+  const u = order.indexOf(user), m = order.indexOf(mid);
+  if(u<0 || m<0) return 1;
+  return Math.abs(u-m)/ (order.length-1);
+}
+function scoreFromDistance(d){ return Math.max(0, Math.round(100*(1 - d))); }
+
+/* ---- Calculator ---- */
+function calcScores(){
+  const avg = avgs[country.value]||avgs.global;
+  const sDist = Math.min(1, Math.abs(Number(sleep.value)-avg.sleep)/3.5);
+  const screenDist = Math.min(1, Math.abs(Number(screen.value)-avg.screen)/6);
+  const incDist = incomeDistance(income.value, avg.incomeMid);
+  const fitP = avg.fitDist[fitness||'never']||0.3;
+  const fitDist = 1 - fitP;
+  const sleepScore = scoreFromDistance(sDist);
+  const screenScore = scoreFromDistance(screenDist);
+  const incomeScore = scoreFromDistance(incDist);
+  const fitScore = scoreFromDistance(fitDist);
+  const total = Math.round(
+    (sleepScore*0.28)+(screenScore*0.28)+(incomeScore*0.26)+(fitScore*0.18)
+  );
+  return {
+    total, avg,
+    categories:[
+      {key:'Sleep', score:sleepScore, detail: Number(sleep.value), avg:avg.sleep},
+      {key:'Screen time', score:screenScore, detail: Number(screen.value), avg:avg.screen},
+      {key:'Income', score:incomeScore, detail: income.value, avg:avg.incomeMid},
+      {key:'Fitness', score:fitScore, detail: fitness, avg:'most common pattern'}
+    ],
+    rarity: fitP,
+  }
+}
+
+/* ---- Render ---- */
+function renderResults(r){
+  results.classList.remove('hidden');
+  avgScore.textContent = r.total;
+  const weird = 100 - r.total;
+  progressBar.style.width = weird + '%';
+  // Rarity pill
+  let pill = '';
+  if(r.total>=90){pill='🔥 10% club — exceptionally average'; triggerConfetti();}
+  else if(r.total<=20){pill='🧬 Unique snowflake — rare combo'; triggerConfetti();}
+  else if(r.rarity<=0.10){pill='🏅 Fitness outlier (~10% do this)';}
+  else{pill='Measurably normal (and that’s okay)';}
+  rarityPill.textContent = pill;
+
+  // Categories
+  cats.innerHTML = '';
+  r.categories.forEach(c=>{
+    const el = document.createElement('div');
+    const tone = c.score>=70?'good':(c.score<=30?'bad':'');
+    let line = '';
+    if(c.key==='Income'){
+      const map={lt20k:'Under $20k','20-40k':'$20k–$40k','40-75k':'$40k–$75k','75-125k':'$75k–$125k','125-200k':'$125k–$200k',gt200k:'Over $200k'};
+      const you = map[c.detail]||'n/a';
+      line = `Income: ${c.score}% match • You: ${you} • Typical: ${map[c.avg]||c.avg}`;
+    } else if(c.key==='Fitness'){
+      const label = c.detail?c.detail:'n/a';
+      line = `Fitness: ${c.score}% match • You: ${label} • Typical: ${c.avg}`;
+    } else if(c.key==='Sleep'){
+      line = `Sleep: ${c.score}% match • You: ${c.detail}h • Typical: ${c.avg}h`;
+    } else if(c.key==='Screen time'){
+      line = `Screen: ${c.score}% match • You: ${c.detail}h • Typical: ${c.avg}h`;
+    }
+    el.className='pill '+tone;
+    el.textContent = line;
+    cats.appendChild(el);
+  });
+
+  // Ad/CTA based on weakest
+  const weakest = [...r.categories].sort((a,b)=>a.score-b.score)[0];
+  let offer = {text:'Dial your baseline up a notch.', url:'#'};
+  if(weakest.key==='Screen time'){
+    offer = {text:'High screen time? Try a focus/detox app.', url:'https://freedom.to/?utm_source=avgtool'};
+  } else if(weakest.key==='Income'){
+    offer = {text:'Boost income: explore remote job boards and micro-courses.', url:'https://remoteok.com/?utm_source=avgtool'};
+  } else if(weakest.key==='Sleep'){
+    offer = {text:'Improve sleep with science-backed routines.', url:'https://www.sleepfoundation.org/?utm_source=avgtool'};
+  } else if(weakest.key==='Fitness'){
+    offer = {text:'Routine builder: get a 3x/week starter plan.', url:'https://www.nerdfitness.com/?utm_source=avgtool'};
+  }
+  adCopy.textContent = offer.text;
+  ctaFix.href = offer.url;
+
+  // Shares
+  const shareMsg = encodeURIComponent(`My “Average Score” is ${r.total} — ${country.value.toUpperCase()} baseline. Are you exceptionally average?`);
+  const pageUrl = encodeURIComponent(location.href.split('#')[0]);
+  shareX.href = `https://twitter.com/intent/tweet?text=${shareMsg}&url=${pageUrl}`;
+  shareFb.href = `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}`;
+  shareWa.href = `https://api.whatsapp.com/send?text=${shareMsg}%20${pageUrl}`;
+  drawQR(qrCanvas, location.href);
+
+  lastResult = r;
+}
+
+/* ---- Gemini commentary (insecure direct key) ---- */
+const DIRECT_GEMINI_KEY = 'AIzaSyDeJRqHsnRYtuCufX2VB8nH7_r35jZxk20'; // WARNING: Exposed in client
+async function generateCommentary(r){
+  commentary.innerHTML = `<div class="row"><div class="loading"></div><div class="small muted">Summoning spicy AI commentary…</div></div>`;
+  const base = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+  const prompt = [
+    "You are a witty, snarky commentator. Produce 2–3 punchy lines (max ~45 words total), playful but encouraging.",
+    "Avoid sensitive traits; focus only on provided stats.",
+    `Country baseline: ${country.value}. Total average score: ${r.total}/100.`,
+    `Details: Sleep=${r.categories[0].detail} vs avg ${r.categories[0].avg}; Screen=${r.categories[1].detail} vs avg ${r.categories[1].avg}; Income=${r.categories[2].detail}; Fitness=${r.categories[3].detail}.`,
+    "End with a nudge like: “One more spin?” Keep emojis to 0–1."
+  ].join('\n');
+  try{
+    const res = await fetch(`${base}?key=${encodeURIComponent(DIRECT_GEMINI_KEY)}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        contents:[{role:'user', parts:[{text: prompt}]}],
+        generationConfig:{temperature:0.9, maxOutputTokens:80}
+      })
+    });
+    if(!res.ok) throw new Error('API error');
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    commentary.innerHTML = text ? sanitize(text) : wittyLocal(r);
+  }catch(e){
+    commentary.innerHTML = wittyLocal(r);
+  }
+}
+function wittyLocal(r){
+  const t = r.total;
+  let line1='', line2='';
+  if(t>=85){ line1="Jackpot: you’re a statistical NPC — in a flattering way."; }
+  else if(t<=25){ line1="You roll against the odds. Main-character variance unlocked."; }
+  else { line1="Balanced build: spicy enough to be fun, stable enough to ship."; }
+  const w = [...r.categories].sort((a,b)=>a.score-b.score)[0];
+  line2 = `Worst stat: ${w.key}. Tilt the odds? One more spin?`;
+  return `<div>${line1}</div><div class="muted small" style="margin-top:6px">${line2}</div>`;
+}
+function sanitize(s){ return s.replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ---- Retry / Mystery ---- */
+const retryLines = [
+  'One more spin…','Double or nothing','Re-roll your stats','Chase the 10% club','Try a lucky tweak','Max out your build','Spin for glory'
+];
+retry.addEventListener('click', ()=>{
+  attempts++;
+  if(attempts===2){ document.getElementById('mystery').classList.remove('hidden'); document.getElementById('weirdText').textContent = unlockWeirdness(lastResult); }
+  retry.textContent = retryLines[Math.floor(Math.random()*retryLines.length)];
+  window.scrollTo({top:0, behavior:'smooth'});
+});
+
+/* ---- Idle / Redirects ---- */
+function resetIdle(){
+  if(idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(()=> smartRedirect('idle'), 45000);
+}
+['mousemove','keydown','touchstart'].forEach(evt=>document.addEventListener(evt, resetIdle, {passive:true}));
+resetIdle();
+
+function smartRedirect(reason){
+  const r = lastResult;
+  let url = 'https://blog.example.com/5-ways-to-improve-your-stats';
+  if(visits>=3){ url = 'https://www.sidehustlestack.co/?utm_source=avgtool'; }
+  if(r){
+    const worst = [...r.categories].sort((a,b)=>a.score-b.score)[0];
+    if(worst.key==='Screen time') url='https://freedom.to/?utm_source=avgtool';
+    if(worst.key==='Income') url='https://remoteok.com/?utm_source=avgtool';
+    if(r.total<=20 || r.total>=90) url='https://www.16personalities.com/free-personality-test';
+  }
+  if(reason==='idle') url = 'https://blog.example.com/5-ways-to-improve-your-stats';
+  window.open(url, '_blank', 'noopener');
+}
+
+/* ---- Confetti ---- */
+const confettiCanvas = document.getElementById('confetti');
+function triggerConfetti(){
+  const c = confettiCanvas, ctx = c.getContext('2d');
+  resizeCanvas(); let particles = [];
+  for(let i=0;i<140;i++){
+    particles.push({x:Math.random()*c.width,y:-20-Math.random()*c.height,vy:2+Math.random()*3,rx:Math.random()*2*Math.PI,color:`hsl(${Math.random()*360},95%,60%)`});
+  }
+  let t = 0;
+  (function step(){
+    ctx.clearRect(0,0,c.width,c.height);
+    particles.forEach(p=>{
+      p.y += p.vy; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rx+=0.06);
+      ctx.fillStyle=p.color; ctx.fillRect(-3,-3,6,6); ctx.restore();
+    });
+    t++; if(t<130) requestAnimationFrame(step); else ctx.clearRect(0,0,c.width,c.height);
+  })();
+}
+function resizeCanvas(){ confettiCanvas.width = innerWidth; confettiCanvas.height = innerHeight; }
+addEventListener('resize', resizeCanvas);
+
+/* ---- QR (placeholder hash pattern) ---- */
+function drawQR(canvas, url){
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const hash = Array.from(new TextEncoder().encode(url)).reduce((a,b)=>((a<<5)-a)+b,0);
+  const size = 12, cell = Math.floor(canvas.width/size);
+  for(let y=0;y<size;y++){
+    for(let x=0;x<size;x++){
+      const bit = ((hash >> ((x+y)%31)) ^ ((x*13+y*7)%97)) & 1;
+      ctx.fillStyle = bit ? '#19e3ff' : '#0e0a1d';
+      ctx.fillRect(x*cell,y*cell,cell-1,cell-1);
+    }
+  }
+}
+
+/* ---- Calculate ---- */
+calc.addEventListener('click', async ()=>{
+  if(!fitness){ alert('Select your fitness frequency.'); return; }
+  if(!income.value){ alert('Select your income bracket.'); return; }
+  // Reel animation pulse
+  document.querySelector('.meter').classList.remove('reel');
+  void document.querySelector('.meter').offsetWidth;
+  document.querySelector('.meter').classList.add('reel');
+
+  const r = calcScores();
+  renderResults(r);
+  await generateCommentary(r);
+  attempts++;
+  if(attempts===2){ document.getElementById('mystery').classList.remove('hidden'); document.getElementById('weirdText').textContent = unlockWeirdness(r); }
+  if(attempts>=2){ setTimeout(()=> smartRedirect('attempts'), 10000); }
+  resetIdle();
+});
+
+/* ---- Mystery unlock ---- */
+function unlockWeirdness(r){
+  const parts = [];
+  const s = r.categories.find(c=>c.key==='Sleep');
+  const sc = r.categories.find(c=>c.key==='Screen time');
+  const f = r.categories.find(c=>c.key==='Fitness');
+  const income = r.categories.find(c=>c.key==='Income');
+  if(s) parts.push(`Sleep skew: ${Math.round((s.detail - s.avg)*10)/10}h vs typical.`);
+  if(sc) parts.push(`Screen skew: ${Math.round((sc.detail - sc.avg)*10)/10}h vs typical.`);
+  if(f) parts.push(`Workout rarity bucket ≈ ${Math.round(r.rarity*100)}% of people.`);
+  if(income) parts.push(`Income distance score: ${income.score}/100.`);
+  parts.push(`Weirdness Index ≈ ${100 - r.total}. Lower = “basic”, higher = “quirky”.`);
+  return parts.join(' ');
+}
+
+/* ---- Copy link ---- */
+copyLink.addEventListener('click', async ()=>{
+  try{
+    await navigator.clipboard.writeText(location.href);
+    copyLink.textContent = 'Copied!';
+    setTimeout(()=>copyLink.textContent='Copy link', 1200);
+  }catch(e){ alert('Copy failed. Long-press to copy the URL.'); }
+});
+
+/* ---- Initial QR ---- */
+drawQR(qrCanvas, location.href);
+</script>
+</body>
+</html>
